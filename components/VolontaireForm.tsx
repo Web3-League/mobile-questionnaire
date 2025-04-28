@@ -10,7 +10,11 @@ import {
     Alert,
     Platform,
     KeyboardAvoidingView,
-    ScrollViewProps,
+    Modal,
+    TouchableWithoutFeedback,
+    Keyboard,
+    SafeAreaView,
+    Dimensions,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
@@ -18,6 +22,10 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import Icon from 'react-native-vector-icons/Feather';
 import api from '../app/services/apiService';
 import styles from './styles';
+
+// Détection de tablette plus précise
+const { width } = Dimensions.get('window');
+const isTablet = width >= 768;
 
 // Types généraux
 type FormFieldType = 'text' | 'select' | 'date' | 'textarea' | 'number';
@@ -119,7 +127,7 @@ const FormTabs: React.FC<FormTabsProps> = ({ tabs, activeTab, setActiveTab }) =>
     </View>
 );
 
-const FormField: React.FC<FormFieldProps> = ({
+const FormField = ({
     label,
     id,
     type = 'text',
@@ -131,9 +139,11 @@ const FormField: React.FC<FormFieldProps> = ({
     placeholder = '',
     infoTooltip = null,
     numberOfLines = 3,
-}) => {
+}: FormFieldProps) => {
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showPickerModal, setShowPickerModal] = useState(false);
 
+    // Amélioration pour les dates
     const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
         setShowDatePicker(false);
         if (selectedDate) {
@@ -158,26 +168,87 @@ const FormField: React.FC<FormFieldProps> = ({
 
             {type === 'select' ? (
                 <View style={[styles.selectContainer, error ? styles.inputError : null]}>
-                    <Picker
-                        selectedValue={value || ''}
-                        onValueChange={(itemValue) => onChange(id, itemValue)}
-                        style={styles.picker}>
-                        <Picker.Item label="Sélectionner..." value="" />
-                        {options?.map((option) =>
-                            typeof option === 'string' ? (
-                                <Picker.Item key={option} label={option} value={option} />
-                            ) : (
-                                option && typeof option === 'object' && 'label' in option && 'value' in option ? (
-                                    <Picker.Item key={(option as { value: string }).value} label={(option as { label: string }).label} value={(option as { value: string }).value} />
-                                ) : null
-                            )
-                        )}
-                    </Picker>
+                    {/* Utiliser un TouchableOpacity au lieu du Picker direct pour les tablettes */}
+                    <TouchableOpacity
+                        style={tabletStyles.selectButton}
+                        onPress={() => {
+                            Keyboard.dismiss();
+                            setShowPickerModal(true);
+                        }}>
+                        <Text style={value ? styles.inputText : styles.placeholderText}>
+                            {value ?
+                                (() => {
+                                    const foundOption = options?.find(opt =>
+                                        (typeof opt === 'string' && opt === value) ||
+                                        (typeof opt === 'object' && opt.value === value)
+                                    );
+
+                                    if (foundOption) {
+                                        if (typeof foundOption === 'string') {
+                                            return foundOption;
+                                        } else if (typeof foundOption === 'object' && 'label' in foundOption) {
+                                            return foundOption.label;
+                                        }
+                                    }
+                                    return value;
+                                })() :
+                                'Sélectionner...'
+                            }
+                        </Text>
+                        <Icon name="chevron-down" size={16} color="#6B7280" />
+                    </TouchableOpacity>
+
+                    {/* Modal de sélection pour éviter les problèmes de Picker sur tablette */}
+                    <Modal
+                        transparent={true}
+                        visible={showPickerModal}
+                        onRequestClose={() => setShowPickerModal(false)}
+                        animationType="slide">
+                        <TouchableWithoutFeedback onPress={() => setShowPickerModal(false)}>
+                            <View style={tabletStyles.modalOverlay}>
+                                <TouchableWithoutFeedback>
+                                    <View style={tabletStyles.pickerModalContainer}>
+                                        <View style={tabletStyles.pickerModalHeader}>
+                                            <TouchableOpacity onPress={() => setShowPickerModal(false)}>
+                                                <Text style={tabletStyles.pickerModalCancel}>Annuler</Text>
+                                            </TouchableOpacity>
+                                            <Text style={tabletStyles.pickerModalTitle}>{label}</Text>
+                                            <TouchableOpacity onPress={() => setShowPickerModal(false)}>
+                                                <Text style={tabletStyles.pickerModalDone}>OK</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                        <View style={{ height: 200 }}>
+                                            <Picker
+                                                selectedValue={value || ''}
+                                                onValueChange={(itemValue) => {
+                                                    onChange(id, itemValue);
+                                                }}
+                                                style={{ flex: 1 }}>
+                                                <Picker.Item label="Sélectionner..." value="" />
+                                                {options?.map((option, index) =>
+                                                    typeof option === 'string' ? (
+                                                        <Picker.Item key={`${option}-${index}`} label={option} value={option} />
+                                                    ) : (
+                                                        option && typeof option === 'object' && 'label' in option && 'value' in option ? (
+                                                            <Picker.Item key={`${option.value}-${index}`} label={option.label} value={option.value} />
+                                                        ) : null
+                                                    )
+                                                )}
+                                            </Picker>
+                                        </View>
+                                    </View>
+                                </TouchableWithoutFeedback>
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </Modal>
                 </View>
             ) : type === 'date' ? (
                 <>
                     <TouchableOpacity
-                        onPress={() => setShowDatePicker(true)}
+                        onPress={() => {
+                            Keyboard.dismiss();
+                            setShowDatePicker(true);
+                        }}
                         style={[styles.input, error ? styles.inputError : null]}>
                         <Text style={value ? styles.inputText : styles.placeholderText}>
                             {value || placeholder || 'Sélectionner une date'}
@@ -253,14 +324,14 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
     );
 };
 
-    // Props pour VolontaireForm
-    interface VolontaireFormProps {
-        isEmbedded?: boolean;
-        onSubmitSuccess?: (id: string) => void;
-    }
+// Props pour VolontaireForm
+interface VolontaireFormProps {
+    isEmbedded?: boolean;
+    onSubmitSuccess?: (id: string) => void;
+}
 
-    // Composant principal
-    const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
+// Composant principal
+const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
     const route = useRoute<RouteProp<Record<string, VolontaireFormRouteParams>, string>>();
     const navigation = useNavigation<any>();
     const { id } = route.params || {};
@@ -2344,10 +2415,12 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
     }
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.keyboardAvoidingContainer}>
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                keyboardVerticalOffset={Platform.select({ ios: 80, android: 80 })}
+                style={{ flex: 1 }}>
+
                 {/* En-tête */}
                 <View style={styles.header}>
                     <View style={styles.headerTitleContainer}>
@@ -2389,7 +2462,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
                     </View>
                 ) : null}
 
-                <View style={styles.formContainer}>
+                <View style={{ flex: 1 }}>
                     {/* Navigation par onglets */}
                     <FormTabs
                         tabs={tabs}
@@ -2397,19 +2470,26 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
                         setActiveTab={setActiveTab}
                     />
 
-                    {/* ScrollView pour le contenu du formulaire */}
+                    {/* ScrollView modifié pour résoudre le problème de défilement */}
                     <ScrollView
                         ref={scrollViewRef}
-                        contentContainerStyle={styles.formScrollContent}
+                        style={{ flex: 1 }}
+                        contentContainerStyle={{
+                            ...styles.formScrollContent,
+                            paddingBottom: 120 // Plus d'espace en bas
+                        }}
+                        keyboardShouldPersistTaps="handled"
+                        keyboardDismissMode="on-drag"
                         showsVerticalScrollIndicator={true}
-                        persistentScrollbar={true}
+                        scrollEnabled={true} // Explicitement activé
+                        removeClippedSubviews={false} // Important pour les tablettes Android
                     >
-                        {/* Contenu de l'onglet actif */}
                         {renderTabContent()}
 
-                        {/* Espacement supplémentaire en bas pour éviter les problèmes de clavier */}
-                        <View style={styles.bottomSpacer} />
+                        {/* Espace supplémentaire en bas */}
+                        <View style={{ height: 100 }} />
                     </ScrollView>
+
 
                     {/* Boutons d'action */}
                     <View style={styles.actionButtons}>
@@ -2439,8 +2519,55 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
                     </View>
                 </View>
             </KeyboardAvoidingView>
-        </View>
+        </SafeAreaView>
     );
 };
+
+// Styles supplémentaires pour la tablette
+const tabletStyles = StyleSheet.create({
+    // Select amélioré
+    selectButton: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        height: '100%',
+        paddingHorizontal: 12,
+    },
+
+    // Modal picker
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-end',
+    },
+    pickerModalContainer: {
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+        paddingBottom: 20,
+    },
+    pickerModalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E7EB',
+    },
+    pickerModalTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1F2937',
+    },
+    pickerModalCancel: {
+        fontSize: 14,
+        color: '#6B7280',
+    },
+    pickerModalDone: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#2563EB',
+    },
+});
 
 export default VolontaireForm;
