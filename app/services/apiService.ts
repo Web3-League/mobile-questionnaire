@@ -131,27 +131,28 @@ const habituesCosmetiquesApi = {
     return API.get(`/volontaires-hc/volontaire/${id}`);
   },
 
-  // Créer des habitudes cosmétiques
   create: (hcData: any) => {
     // Créer une copie des données pour éviter de les modifier directement
     const data = { ...hcData };
+
     // S'assurer que l'ID est envoyé comme un nombre
     if (data.idVol && typeof data.idVol === 'string') {
       data.idVol = parseInt(data.idVol, 10);
     }
-    // Convertir toutes les valeurs booléennes en "Oui"/"Non" selon l'exemple de la BDD
+
+    // Convertir toutes les valeurs booléennes selon différentes possibilités
     Object.keys(data).forEach(key => {
       if (key !== 'idVol' && typeof data[key] === 'boolean') {
-        data[key] = data[key] ? "Oui" : "Non";
+        // Essayons avec "oui"/"non" en minuscules
+        data[key] = data[key] ? 'oui' : 'non';
+
+        // Alternatives à tester si la version ci-dessus ne fonctionne pas:
+        // data[key] = data[key] ? 'true' : 'false';
+        // data[key] = data[key] ? '1' : '0';
       }
     });
-    // Utiliser une configuration spécifique pour cette requête pour éviter les problèmes d'échappement
-    return API.post('/volontaires-hc', data, {
-      headers: {
-        'Content-Type': 'application/json;charset=UTF-8',
-        'Accept': 'application/json'
-      }
-    });
+
+    return API.post('/volontaires-hc', data);
   },
 
   // Mettre à jour les produits d'un volontaire

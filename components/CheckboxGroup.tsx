@@ -7,7 +7,7 @@ type CheckboxItem = {
   id: string;
   label: string;
   checked: boolean;
-  onChange: (value: string) => void;
+  onChange: (value: boolean) => void;
 };
 
 type CheckboxGroupProps = {
