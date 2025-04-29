@@ -43,7 +43,8 @@ export default function HomeScreen() {
       <View style={styles.content}>
         <Text style={styles.subtitle}>Bienvenue dans l'application de gestion des volontaires</Text>
         
-        <View style={[styles.cardsContainer, isTablet && isLandscape && styles.cardsRowContainer]}>
+        {/* Always use row layout for cards */}
+        <View style={styles.cardsRowContainer}>
 
           {/* Carte pour le formulaire Volontaire */}
           <TouchableOpacity style={styles.card} onPress={goToVolontaireForm}>
@@ -111,6 +112,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    marginTop: 16,
   },
   card: {
     backgroundColor: "#FFFFFF",
@@ -124,7 +126,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
-    flex: isTablet ? 0.31 : undefined, // Environ 3 cartes par ligne sur tablette en paysage
+    // Make each card take up roughly half the width
+    width: '48%',
   },
   cardIconContainer: {
     width: 60,

@@ -3,7 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuration de base d'axios
 const API = axios.create({
-  baseURL: 'http://10.0.2.2:8888/api',
+  //baseURL: 'http://10.0.2.2:8888/api',
+  baseURL: 'http://localhost:8888/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -139,8 +140,6 @@ create: (hcData) => {
     data.idVol = parseInt(data.idVol, 10);
   }
   
-  // S'assurer que les chaînes "Oui" et "Non" sont correctement envoyées
-  // (si nécessaire, vous pourriez avoir besoin d'ajuster cette partie selon les besoins exacts du backend)
   
   return API.post('/volontaires-hc', data);
 },

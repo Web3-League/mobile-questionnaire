@@ -45,7 +45,7 @@ export default StyleSheet.create({
   scrollViewContent: {
     paddingBottom: SPACING * 4,
   },
-  
+
   // En-tête
   header: {
     backgroundColor: COLORS.surface,
@@ -94,7 +94,7 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  
+
   // Navigation par switch
   switchNavContainer: {
     backgroundColor: COLORS.surface,
@@ -126,7 +126,7 @@ export default StyleSheet.create({
     color: COLORS.primary,
     fontWeight: '600',
   },
-  
+
   // Messages de notification
   errorBanner: {
     backgroundColor: '#FEE2E2',
@@ -144,12 +144,12 @@ export default StyleSheet.create({
     marginLeft: SPACING,
     flex: 1,
   },
-  
+
   // Container principal du formulaire
   formContainer: {
     paddingHorizontal: SPACING * 2,
   },
-  
+
   // Carte d'info volontaire
   volontaireInfoCard: {
     flexDirection: 'row',
@@ -183,7 +183,7 @@ export default StyleSheet.create({
     fontSize: FONT_SIZE_SMALL,
     color: COLORS.text.secondary,
   },
-  
+
   // Section pliable
   collapsibleSection: {
     marginBottom: SPACING * 1.5,
@@ -218,7 +218,7 @@ export default StyleSheet.create({
   sectionContent: {
     padding: SPACING,
   },
-  
+
   // Disposition en grille
   gridContainer: {
     flexDirection: 'row',
@@ -230,7 +230,7 @@ export default StyleSheet.create({
     paddingHorizontal: SPACING,
     marginBottom: SPACING,
   },
-  
+
   // Titres de section
   subSectionTitle: {
     fontSize: FONT_SIZE_NORMAL,
@@ -239,7 +239,7 @@ export default StyleSheet.create({
     marginBottom: SPACING / 2,
     marginTop: SPACING / 2,
   },
-  
+
   // Champs de formulaire
   formField: {
     marginBottom: SPACING * 1.5,
@@ -288,7 +288,7 @@ export default StyleSheet.create({
     textAlignVertical: 'top',
     minHeight: INPUT_HEIGHT * 3,
   },
-  
+
   // Select/Picker
   selectContainer: {
     borderWidth: 1,
@@ -301,7 +301,7 @@ export default StyleSheet.create({
   picker: {
     height: INPUT_HEIGHT,
   },
-  
+
   // Checkbox
   checkboxContainer: {
     flexDirection: 'row',
@@ -328,7 +328,7 @@ export default StyleSheet.create({
     color: COLORS.text.primary,
     flex: 1,
   },
-  
+
   // Section commentaires
   commentSection: {
     marginTop: SPACING,
@@ -339,7 +339,7 @@ export default StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  
+
   // Boutons d'action
   actionButtons: {
     flexDirection: 'row',
@@ -388,7 +388,14 @@ export default StyleSheet.create({
   buttonIcon: {
     marginRight: SPACING / 2,
   },
-  
+
+
+  checkboxField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
   // Divers
   loadingContainer: {
     flex: 1,

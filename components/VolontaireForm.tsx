@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
+import WebDatePicker from './WebDatePicker';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/Feather';
 import api from '../app/services/apiService';
@@ -243,26 +244,38 @@ const FormField = ({
                     </Modal>
                 </View>
             ) : type === 'date' ? (
-                <>
-                    <TouchableOpacity
-                        onPress={() => {
-                            Keyboard.dismiss();
-                            setShowDatePicker(true);
-                        }}
-                        style={[styles.input, error ? styles.inputError : null]}>
-                        <Text style={value ? styles.inputText : styles.placeholderText}>
-                            {value || placeholder || 'Sélectionner une date'}
-                        </Text>
-                    </TouchableOpacity>
-                    {showDatePicker && (
-                        <DateTimePicker
-                            value={value ? new Date(value) : new Date()}
-                            mode="date"
-                            display="default"
-                            onChange={handleDateChange}
-                        />
-                    )}
-                </>
+                Platform.OS === 'web' ? (
+                    <WebDatePicker
+                        label={label}
+                        id={id}
+                        value={value}
+                        onChange={onChange}
+                        placeholder={placeholder}
+                        error={error}
+                        required={required}
+                    />
+                ) : (
+                    <>
+                        <TouchableOpacity
+                            onPress={() => {
+                                Keyboard.dismiss();
+                                setShowDatePicker(true);
+                            }}
+                            style={[styles.input, error ? styles.inputError : null]}>
+                            <Text style={value ? styles.inputText : styles.placeholderText}>
+                                {value ? new Date(value).toLocaleDateString('fr-FR') : (placeholder || 'Sélectionner une date')}
+                            </Text>
+                        </TouchableOpacity>
+                        {showDatePicker && (
+                            <DateTimePicker
+                                value={value ? new Date(value) : new Date()}
+                                mode="date"
+                                display="default"
+                                onChange={handleDateChange}
+                            />
+                        )}
+                    </>
+                )
             ) : type === 'textarea' ? (
                 <TextInput
                     value={value || ''}
