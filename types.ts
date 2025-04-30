@@ -30,7 +30,7 @@ export type FormSection = {
 
 // Navigation types
 export type RootStackParamList = {
-  Accueil: undefined;
+  index: undefined;
   VolontairesList: undefined;
   VolontaireHcForm: { idVol?: string };
 };

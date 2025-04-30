@@ -41,10 +41,10 @@ const VolontaireHcForm: React.FC = () => {
     }
   }, [idVol]);
 
-  const handleCheckboxChange = (field: keyof FormData) => (value: string) => {
+  const handleCheckboxChange = (field: keyof FormData) => (value: boolean) => {
     setFormData(prev => ({
       ...prev,
-      [field]: !prev[field]
+      [field]: value
     }));
   };
 
@@ -60,7 +60,7 @@ const VolontaireHcForm: React.FC = () => {
       await api.habituesCosmetiques.create(formData);
       
       Alert.alert('Succès', 'Données enregistrées !', [
-        { text: 'OK', onPress: () => navigation.navigate('Accueil') }
+        { text: 'OK', onPress: () => navigation.navigate('index') }
       ]);
     } catch (error) {
       setSubmitError('Erreur lors de l\'enregistrement');

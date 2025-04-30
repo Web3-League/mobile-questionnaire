@@ -1,52 +1,45 @@
 import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// Importation de la bibliothèque de gestion des cookies
-import Cookies from 'js-cookie';
+// Remove js-cookie import as it's not compatible with React Native
 
 // Configuration de base d'axios
 const API: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:8888', // Sans /api car les endpoints incluent déjà /api
-  timeout: 10000,
+  baseURL: 'http://10.0.2.2:8888',
+  timeout: 30000, // Increase timeout to 30 seconds for testing
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   },
-  // Important: Activation des cookies pour les requêtes cross-origin
   withCredentials: true
 });
 
-// Fonction pour définir le token via cookie
-const setAuthToken = (token: string) => {
+// Fonction pour définir le token - modified to only use AsyncStorage
+const setAuthToken = async (token: string) => {
   if (token) {
-    // Stocke le token dans un cookie
-    Cookies.set('authToken', token, { 
-      expires: 1, // 1 jour
-      path: '/',
-      secure: window.location.protocol === 'https:',
-      sameSite: 'lax'
-    });
+    // Store token in AsyncStorage
+    await AsyncStorage.setItem('authToken', token);
     
-    // Aussi dans les en-têtes par défaut (pour les requêtes immédiates)
+    // Also set in default headers for immediate requests
     API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    console.log("Token défini dans cookie et en-têtes");
+    console.log("Token défini dans AsyncStorage et en-têtes");
   } else {
-    // Supprime le cookie
-    Cookies.remove('authToken');
+    // Remove token from AsyncStorage
+    await AsyncStorage.removeItem('authToken');
     delete API.defaults.headers.common['Authorization'];
-    console.log("Token supprimé des cookies et en-têtes");
+    console.log("Token supprimé de AsyncStorage et en-têtes");
   }
 };
 
-// Vérifier si un token existe déjà dans les cookies au démarrage
-(() => {
+// Check if a token already exists in AsyncStorage on startup
+(async () => {
   try {
-    const token = Cookies.get('authToken');
+    const token = await AsyncStorage.getItem('authToken');
     if (token) {
-      console.log("Token trouvé dans les cookies au démarrage");
+      console.log("Token trouvé dans AsyncStorage au démarrage");
       API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
   } catch (error) {
-    console.error("Erreur lors de la récupération du token des cookies:", error);
+    console.error("Erreur lors de la récupération du token depuis AsyncStorage:", error);
   }
 })();
 
@@ -55,19 +48,11 @@ API.interceptors.request.use(
   async (config: any) => {
     // Vérifier si le token est déjà défini dans les en-têtes
     if (!config.headers.Authorization) {
-      // Essayer de récupérer depuis les cookies d'abord
-      const cookieToken = Cookies.get('authToken');
-      
-      if (cookieToken) {
-        config.headers.Authorization = `Bearer ${cookieToken}`;
-        console.log("Token ajouté à la requête depuis cookie");
-      } else {
-        // Fallback sur AsyncStorage (pour compatibilité mobile)
-        const storageToken = await AsyncStorage.getItem('authToken');
-        if (storageToken && config.headers) {
-          config.headers.Authorization = `Bearer ${storageToken}`;
-          console.log("Token ajouté à la requête depuis AsyncStorage");
-        }
+      // Récupérer depuis AsyncStorage
+      const token = await AsyncStorage.getItem('authToken');
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+        console.log("Token ajouté à la requête depuis AsyncStorage");
       }
     }
     
@@ -76,6 +61,21 @@ API.interceptors.request.use(
   },
   (error) => {
     console.error("Erreur dans l'intercepteur de requête:", error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for error handling
+API.interceptors.response.use(
+  response => response,
+  error => {
+    console.log('API Error:', error.message);
+    if (error.response) {
+      console.log('Status:', error.response.status);
+      console.log('Data:', error.response.data);
+    } else if (error.request) {
+      console.log('No response received:', error.request);
+    }
     return Promise.reject(error);
   }
 );
@@ -171,35 +171,74 @@ const habituesCosmetiquesApi = {
   }
 };
 
+// Add a connection test function
+const testConnection = async () => {
+  try {
+    console.log('Testing API connection...');
+    const response = await axios.get('http://10.0.2.2:8888/api/health', { 
+      timeout: 5000 
+    });
+    console.log('Connection successful:', response.data);
+    return true;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Connection test failed:', error.message);
+    } else {
+      console.error('Connection test failed:', error);
+    }
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+      // Type assertion to access error.response safely
+      const err = error as { response: any };
+      console.log('Response received with error status:', err.response.status);
+    } else if (typeof error === 'object' && error !== null && 'request' in error) {
+      const err = error as { request: any };
+      console.log('No response received from server');
+    }
+    return false;
+  }
+};
+
 // Exportez vos API
 export default {
   volontaires: volontairesApi,
   habituesCosmetiques: habituesCosmetiquesApi,
   setAuthToken, // Exporter la fonction setAuthToken
+  testConnection, // Export the test function
 
   // Méthode pour gérer la connexion
-  login: (login: string, password: string) => {
-    return API.post('/api/auth/login', { 
-      login: login,
-      motDePasse: password
-    }).then(response => {
-      // Si la réponse contient un token, le stocker dans un cookie
+  login: async (login: string, password: string) => {
+    try {
+      console.log(`Tentative de connexion avec: ${login}`);
+      const response = await API.post('/api/auth/login', { 
+        login: login,
+        motDePasse: password
+      });
+      
+      // Si la réponse contient un token, le stocker
       if (response.data && response.data.token) {
-        setAuthToken(response.data.token);
-        
-        // Aussi dans AsyncStorage pour la compatibilité mobile
-        AsyncStorage.setItem('authToken', response.data.token);
+        await setAuthToken(response.data.token);
       }
       return response;
-    });
+    } catch (error) {
+      console.error('Erreur de connexion:', error);
+      if (typeof error === 'object' && error !== null && 'response' in error) {
+        console.error('Réponse d\'erreur:', (error as any).response.data);
+      } else if (typeof error === 'object' && error !== null && 'request' in error) {
+        console.error('Aucune réponse reçue:', (error as any).request);
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        console.error('Erreur de configuration:', (error as any).message);
+      } else {
+        console.error('Erreur inconnue:', error);
+      }
+      throw error;
+    }
   },
 
   // Méthode pour la déconnexion
   logout: async () => {
     try {
       await API.post('/api/auth/logout');
-      // Supprimer des deux stockages
-      Cookies.remove('authToken');
+      // Supprimer le token
       await AsyncStorage.removeItem('authToken');
       delete API.defaults.headers.common['Authorization'];
       return true;
