@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Questionnaire",
-    "slug": "Questionnaire",
+    "slug": "questionnaire",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,7 +15,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.boris.peyriguere.Questionnaire"
     },
     "web": {
       "bundler": "metro",
@@ -32,10 +33,27 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enablePngCrunchInReleaseBuilds": false
+          }
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "0be346aa-eee0-4bc1-89fd-7f9da656bfbc"
+      }
+    },
+    "owner": "cosmetest"
   }
 }

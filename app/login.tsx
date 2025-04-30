@@ -110,7 +110,7 @@ export default function LoginScreen() {
           <View style={styles.logoContainer}>
             {/* Remplacer par votre logo */}
             <Image
-              source={require("../assets/logo.png")} 
+              source={require("../assets/images/logo.png")} 
               style={styles.logo}
               resizeMode="contain"
             />
