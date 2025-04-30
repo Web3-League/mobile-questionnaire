@@ -178,13 +178,16 @@ export default {
 
   // Méthode pour gérer la connexion
   login: (email: string, password: string) => {
-    return API.post('/auth/login', { email, password });
+    return API.post('/api/auth/login', {
+      login: email,  // Correspond à loginRequest.getLogin() côté backend
+      motDePasse: password  // Correspond à loginRequest.getMotDePasse() côté backend
+    });
   },
 
   // Méthode pour la déconnexion
   logout: async () => {
     try {
-      await API.post('/auth/logout');
+      await API.post('/api/auth/logout');
       await AsyncStorage.removeItem('authToken');
       await AsyncStorage.removeItem('refreshToken');
       return true;

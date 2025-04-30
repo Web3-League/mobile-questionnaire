@@ -47,16 +47,18 @@ export default function LoginScreen() {
       // Appel à l'API pour se connecter
       const response = await api.login(email, password);
       
-      // Stocker le token dans AsyncStorage
-      await AsyncStorage.setItem("authToken", response.data.token);
-      
-      // Si votre API renvoie un refreshToken, stockez-le également
-      if (response.data.refreshToken) {
-        await AsyncStorage.setItem("refreshToken", response.data.refreshToken);
+      // Le backend envoie le token JWT dans la réponse
+      if (response.data && response.data.token) {
+        // Stocker le token dans AsyncStorage
+        await AsyncStorage.setItem("authToken", response.data.token);
+        
+        // Redirection vers la page d'accueil
+        router.replace("/");
+      } else {
+        // Si le token n'est pas dans la réponse
+        setError("Erreur de format de réponse du serveur");
+        console.error("Format de réponse inattendu:", response.data);
       }
-      
-      // Redirection vers la page d'accueil
-      router.replace("/");
     } catch (error) {
       console.error("Erreur de connexion:", error);
       
@@ -68,12 +70,16 @@ export default function LoginScreen() {
         } else {
           setError("Erreur lors de la connexion. Veuillez réessayer.");
         }
+        // Log supplémentaire pour le débogage
+        console.error("Détails de l'erreur:", error.response.data);
       } else if (error.request) {
         // La requête a été faite mais aucune réponse n'a été reçue
         setError("Impossible de se connecter au serveur. Vérifiez votre connexion internet.");
+        console.error("Aucune réponse reçue:", error.request);
       } else {
         // Une erreur s'est produite lors de la configuration de la requête
         setError("Une erreur est survenue. Veuillez réessayer.");
+        console.error("Erreur de configuration:", error.message);
       }
     } finally {
       setLoading(false);
