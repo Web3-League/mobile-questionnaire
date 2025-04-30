@@ -110,7 +110,7 @@ export default function HabitudesCosmetiquesPage() {
               </View>
               <View>
                 <Text style={styles.volontaireName}>
-                  {volontaireInfo.nomVol} {volontaireInfo.prenomVol}
+                  {volontaireInfo.nom} {volontaireInfo.prenom}
                 </Text>
                 <Text style={styles.volontaireDetails}>
                   ID: {idVol} • {volontaireInfo.sexe}

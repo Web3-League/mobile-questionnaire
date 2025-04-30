@@ -81,14 +81,6 @@ const VolontaireHcForm: React.FC = () => {
             title="Habitudes Cosmétiques"
             onBack={() => navigation.goBack()}
           />
-          
-          <SwitchNavigation
-            routes={[
-              { name: 'Volontaires', target: 'VolontairesList' },
-              { name: 'Habitudes Cosmétiques', target: 'VolontaireHcForm' }
-            ]}
-            currentRoute={route.name}
-          />
 
           {submitError && (
             <View style={styles.errorBanner}>

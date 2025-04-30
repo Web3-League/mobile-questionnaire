@@ -78,7 +78,7 @@ export const FORM_SECTIONS: FormSection[] = [
   },
   {
     title: 'Démaquillage et nettoyage',
-    icon: 'clean',
+    icon: 'Spray',
     groups: [
       {
         items: [
@@ -94,7 +94,7 @@ export const FORM_SECTIONS: FormSection[] = [
   },
   {
     title: 'Soins du corps',
-    icon: 'body',
+    icon: 'User',
     groups: [
       {
         items: [
@@ -114,7 +114,7 @@ export const FORM_SECTIONS: FormSection[] = [
   },
   {
     title: 'Soins spécifiques',
-    icon: 'hand',
+    icon: 'Hand',
     groups: [
       {
         items: [
@@ -130,7 +130,7 @@ export const FORM_SECTIONS: FormSection[] = [
   },
   {
     title: 'Produits d\'hygiène',
-    icon: 'shower',
+    icon: 'Cloud',
     groups: [
       {
         items: [
@@ -147,7 +147,7 @@ export const FORM_SECTIONS: FormSection[] = [
   },
   {
     title: 'Soins capillaires',
-    icon: 'hair',
+    icon: 'Feather',
     groups: [
       {
         items: [
@@ -165,7 +165,7 @@ export const FORM_SECTIONS: FormSection[] = [
   },
   {
     title: 'Maquillage visage',
-    icon: 'face',
+    icon: 'Smile',
     groups: [
       {
         items: [
