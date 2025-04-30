@@ -13,7 +13,6 @@ import {
   Dimensions,
   SafeAreaView,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import api from "./services/apiService";
 
@@ -23,15 +22,15 @@ const isTablet = width >= 768;
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [identifiant, setIdentifiant] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
     // Validation simple
-    if (!email.trim()) {
-      setError("Veuillez entrer votre adresse email");
+    if (!identifiant.trim()) {
+      setError("Veuillez entrer votre identifiant");
       return;
     }
 
@@ -44,42 +43,57 @@ export default function LoginScreen() {
       setLoading(true);
       setError("");
 
+      console.log("Tentative de connexion avec:", identifiant);
+
       // Appel à l'API pour se connecter
-      const response = await api.login(email, password);
+      const response = await api.login(identifiant, password);
       
-      // Le backend envoie le token JWT dans la réponse
-      if (response.data && response.data.token) {
-        // Stocker le token dans AsyncStorage
-        await AsyncStorage.setItem("authToken", response.data.token);
-        
-        // Redirection vers la page d'accueil
-        router.replace("/");
-      } else {
-        // Si le token n'est pas dans la réponse
-        setError("Erreur de format de réponse du serveur");
-        console.error("Format de réponse inattendu:", response.data);
-      }
+      console.log("Réponse du serveur:", JSON.stringify(response.data, null, 2));
+      
+      // Le stockage est désormais géré dans la méthode login de apiService
+      // qui stocke le token à la fois dans les cookies et dans AsyncStorage
+      
+      // Redirection vers la page d'accueil
+      router.replace("/");
+      
     } catch (error) {
       console.error("Erreur de connexion:", error);
       
       // Afficher un message d'erreur approprié
-      if (error.response) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        error.response
+      ) {
         // La requête a été faite et le serveur a répondu avec un code d'état
-        if (error.response.status === 401) {
-          setError("Email ou mot de passe incorrect");
+        const err = error as { response: { status: number; data: any } };
+        if (err.response.status === 401) {
+          setError("Identifiant ou mot de passe incorrect");
         } else {
-          setError("Erreur lors de la connexion. Veuillez réessayer.");
+          setError(`Erreur ${err.response.status} lors de la connexion. Veuillez réessayer.`);
         }
         // Log supplémentaire pour le débogage
-        console.error("Détails de l'erreur:", error.response.data);
-      } else if (error.request) {
+        console.error("Détails de l'erreur:", JSON.stringify(err.response.data));
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "request" in error &&
+        error.request
+      ) {
         // La requête a été faite mais aucune réponse n'a été reçue
         setError("Impossible de se connecter au serveur. Vérifiez votre connexion internet.");
-        console.error("Aucune réponse reçue:", error.request);
-      } else {
+        console.error("Aucune réponse reçue:", (error as any).request);
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error
+      ) {
         // Une erreur s'est produite lors de la configuration de la requête
         setError("Une erreur est survenue. Veuillez réessayer.");
-        console.error("Erreur de configuration:", error.message);
+        console.error("Erreur de configuration:", (error as any).message);
+      } else {
+        setError("Une erreur inconnue est survenue.");
       }
     } finally {
       setLoading(false);
@@ -113,13 +127,12 @@ export default function LoginScreen() {
             ) : null}
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>Identifiant</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Entrez votre email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
+                placeholder="Entrez votre identifiant"
+                value={identifiant}
+                onChangeText={setIdentifiant}
                 autoCapitalize="none"
                 autoCorrect={false}
               />

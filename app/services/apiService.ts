@@ -1,77 +1,81 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { FormData } from '../../types';
+// Importation de la bibliothèque de gestion des cookies
+import Cookies from 'js-cookie';
 
 // Configuration de base d'axios
 const API: AxiosInstance = axios.create({
-  //baseURL: 'http://10.0.2.2:8888/api', // Utilisé pour Android Emulator
-  baseURL: 'http://localhost:8888/api',
+  baseURL: 'http://localhost:8888', // Sans /api car les endpoints incluent déjà /api
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
-  }
+  },
+  // Important: Activation des cookies pour les requêtes cross-origin
+  withCredentials: true
 });
+
+// Fonction pour définir le token via cookie
+const setAuthToken = (token: string) => {
+  if (token) {
+    // Stocke le token dans un cookie
+    Cookies.set('authToken', token, { 
+      expires: 1, // 1 jour
+      path: '/',
+      secure: window.location.protocol === 'https:',
+      sameSite: 'lax'
+    });
+    
+    // Aussi dans les en-têtes par défaut (pour les requêtes immédiates)
+    API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    console.log("Token défini dans cookie et en-têtes");
+  } else {
+    // Supprime le cookie
+    Cookies.remove('authToken');
+    delete API.defaults.headers.common['Authorization'];
+    console.log("Token supprimé des cookies et en-têtes");
+  }
+};
+
+// Vérifier si un token existe déjà dans les cookies au démarrage
+(() => {
+  try {
+    const token = Cookies.get('authToken');
+    if (token) {
+      console.log("Token trouvé dans les cookies au démarrage");
+      API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+  } catch (error) {
+    console.error("Erreur lors de la récupération du token des cookies:", error);
+  }
+})();
 
 // Intercepteur pour ajouter le token d'authentification à chaque requête
 API.interceptors.request.use(
-  async (config: import('axios').InternalAxiosRequestConfig): Promise<import('axios').InternalAxiosRequestConfig> => {
-    const token = await AsyncStorage.getItem('authToken');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error: any) => {
-    return Promise.reject(error);
-  }
-);
-
-// Intercepteur pour gérer les réponses et les erreurs
-API.interceptors.response.use(
-  (response: AxiosResponse) => {
-    return response;
-  },
-  async (error: any) => {
-    const originalRequest = error.config;
-
-    // Si l'erreur est 401 (non autorisé) et que ce n'est pas déjà une tentative de rafraîchissement
-    if (error.response && error.response.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        // Tentative de rafraîchissement du token
-        const refreshToken = await AsyncStorage.getItem('refreshToken');
-        if (!refreshToken) {
-          // Si pas de refresh token, rediriger vers login
-          await AsyncStorage.removeItem('authToken');
-          return Promise.reject(error);
+  async (config: any) => {
+    // Vérifier si le token est déjà défini dans les en-têtes
+    if (!config.headers.Authorization) {
+      // Essayer de récupérer depuis les cookies d'abord
+      const cookieToken = Cookies.get('authToken');
+      
+      if (cookieToken) {
+        config.headers.Authorization = `Bearer ${cookieToken}`;
+        console.log("Token ajouté à la requête depuis cookie");
+      } else {
+        // Fallback sur AsyncStorage (pour compatibilité mobile)
+        const storageToken = await AsyncStorage.getItem('authToken');
+        if (storageToken && config.headers) {
+          config.headers.Authorization = `Bearer ${storageToken}`;
+          console.log("Token ajouté à la requête depuis AsyncStorage");
         }
-
-        const response = await axios.post(
-          'http://localhost:8888/api/auth/refresh',
-          { refreshToken }
-        );
-
-        const { token, newRefreshToken } = response.data;
-
-        // Sauvegarder les nouveaux tokens
-        await AsyncStorage.setItem('authToken', token);
-        await AsyncStorage.setItem('refreshToken', newRefreshToken);
-
-        // Relancer la requête originale avec le nouveau token
-        if (API.defaults.headers.common) {
-          API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        }
-        return API(originalRequest);
-      } catch (refreshError) {
-        // Si le rafraîchissement échoue, déconnecter l'utilisateur
-        await AsyncStorage.removeItem('authToken');
-        await AsyncStorage.removeItem('refreshToken');
-        return Promise.reject(refreshError);
       }
     }
-
+    
+    console.log(`Requête vers ${config.url}`);
+    return config;
+  },
+  (error) => {
+    console.error("Erreur dans l'intercepteur de requête:", error);
     return Promise.reject(error);
   }
 );
@@ -80,42 +84,42 @@ API.interceptors.response.use(
 const volontairesApi = {
   // Récupérer tous les volontaires
   getAll: () => {
-    return API.get('/volontaires');
+    return API.get('/api/volontaires');
   },
 
   // Récupérer un volontaire par ID
   getById: (id: string | number) => {
-    return API.get(`/volontaires/${id}`);
+    return API.get(`/api/volontaires/${id}`);
   },
 
   // Récupérer les détails d'un volontaire
   getDetailsById: (id: string | number) => {
-    return API.get(`/volontaires/${id}/details`);
+    return API.get(`/api/volontaires/${id}/details`);
   },
 
   // Créer un nouveau volontaire
   create: (volontaireData: any) => {
-    return API.post('/volontaires', volontaireData);
+    return API.post('/api/volontaires', volontaireData);
   },
 
   // Créer les détails d'un volontaire
   createDetails: (detailsData: any) => {
-    return API.post('/volontaires/details', detailsData);
+    return API.post('/api/volontaires/details', detailsData);
   },
 
   // Mettre à jour un volontaire
   update: (id: string | number, volontaireData: any) => {
-    return API.put(`/volontaires/${id}`, volontaireData);
+    return API.put(`/api/volontaires/${id}`, volontaireData);
   },
 
   // Mettre à jour les détails d'un volontaire
   updateDetails: (id: string | number, detailsData: any) => {
-    return API.put(`/volontaires/${id}/details`, detailsData);
+    return API.put(`/api/volontaires/${id}/details`, detailsData);
   },
 
   // Supprimer un volontaire
   delete: (id: string | number) => {
-    return API.delete(`/volontaires/${id}`);
+    return API.delete(`/api/volontaires/${id}`);
   }
 };
 
@@ -123,12 +127,12 @@ const volontairesApi = {
 const habituesCosmetiquesApi = {
   // Récupérer toutes les habitudes cosmétiques
   getAll: () => {
-    return API.get('/volontaires-hc');
+    return API.get('/api/volontaires-hc');
   },
 
   // Récupérer les habitudes cosmétiques d'un volontaire
   getByVolontaireId: (id: string | number) => {
-    return API.get(`/volontaires-hc/volontaire/${id}`);
+    return API.get(`/api/volontaires-hc/volontaire/${id}`);
   },
 
   create: (hcData: any) => {
@@ -145,29 +149,25 @@ const habituesCosmetiquesApi = {
       if (key !== 'idVol' && typeof data[key] === 'boolean') {
         // Essayons avec "oui"/"non" en minuscules
         data[key] = data[key] ? 'oui' : 'non';
-
-        // Alternatives à tester si la version ci-dessus ne fonctionne pas:
-        // data[key] = data[key] ? 'true' : 'false';
-        // data[key] = data[key] ? '1' : '0';
       }
     });
 
-    return API.post('/volontaires-hc', data);
+    return API.post('/api/volontaires-hc', data);
   },
 
   // Mettre à jour les produits d'un volontaire
   updateProduits: (idVol: string | number, produitsData: any) => {
-    return API.patch(`/volontaires-hc/volontaire/${idVol}/produits`, produitsData);
+    return API.patch(`/api/volontaires-hc/volontaire/${idVol}/produits`, produitsData);
   },
 
   // Mettre à jour un produit d'un volontaire
   updateProduit: (idVol: string | number, produitData: any) => {
-    return API.patch(`/volontaires-hc/volontaire/${idVol}/produit`, produitData);
+    return API.patch(`/api/volontaires-hc/volontaire/${idVol}/produit`, produitData);
   },
 
   // Supprimer les habitudes cosmétiques d'un volontaire
   delete: (idVol: string | number) => {
-    return API.delete(`/volontaires-hc/volontaire/${idVol}`);
+    return API.delete(`/api/volontaires-hc/volontaire/${idVol}`);
   }
 };
 
@@ -175,12 +175,22 @@ const habituesCosmetiquesApi = {
 export default {
   volontaires: volontairesApi,
   habituesCosmetiques: habituesCosmetiquesApi,
+  setAuthToken, // Exporter la fonction setAuthToken
 
   // Méthode pour gérer la connexion
-  login: (email: string, password: string) => {
-    return API.post('/api/auth/login', {
-      login: email,  // Correspond à loginRequest.getLogin() côté backend
-      motDePasse: password  // Correspond à loginRequest.getMotDePasse() côté backend
+  login: (login: string, password: string) => {
+    return API.post('/api/auth/login', { 
+      login: login,
+      motDePasse: password
+    }).then(response => {
+      // Si la réponse contient un token, le stocker dans un cookie
+      if (response.data && response.data.token) {
+        setAuthToken(response.data.token);
+        
+        // Aussi dans AsyncStorage pour la compatibilité mobile
+        AsyncStorage.setItem('authToken', response.data.token);
+      }
+      return response;
     });
   },
 
@@ -188,12 +198,36 @@ export default {
   logout: async () => {
     try {
       await API.post('/api/auth/logout');
+      // Supprimer des deux stockages
+      Cookies.remove('authToken');
       await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('refreshToken');
+      delete API.defaults.headers.common['Authorization'];
       return true;
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
       return false;
+    }
+  },
+
+  // Méthode pour tester le token
+  validateToken: async () => {
+    try {
+      const response = await API.get('/api/auth/validate');
+      return { valid: true, message: response.data };
+    } catch (error) {
+      let message = '';
+      if (typeof error === 'object' && error !== null) {
+        if ('response' in error && (error as any).response?.data) {
+          message = (error as any).response.data;
+        } else if ('message' in error) {
+          message = (error as any).message;
+        } else {
+          message = 'Une erreur inconnue est survenue.';
+        }
+      } else {
+        message = String(error);
+      }
+      return { valid: false, message };
     }
   }
 };

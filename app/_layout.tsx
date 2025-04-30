@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { Stack, Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -43,24 +43,31 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: "#F9FAFB" },
-      }}
-    >
-      {isAuthenticated ? (
-        // Routes pour utilisateurs authentifiés
+    <>
+      {/* Cette redirection est la clé - elle redirige automatiquement selon l'état d'authentification */}
+      {!isLoading && (
         <>
-          <Stack.Screen name="index" options={{ gestureEnabled: false }} />
-          <Stack.Screen name="volontaire" />
-          <Stack.Screen name="habitudes-cosmetiques" />
+          {isAuthenticated ? (
+            <Redirect href="/" />
+          ) : (
+            <Redirect href="/login" />
+          )}
         </>
-      ) : (
-        // Routes pour utilisateurs non authentifiés
-        <Stack.Screen name="login" options={{ gestureEnabled: false }} />
       )}
-    </Stack>
+
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: "#F9FAFB" },
+        }}
+      >
+        {/* Définir toutes les routes ici, qu'elles soient accessibles ou non */}
+        <Stack.Screen name="index" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="volontaire" />
+        <Stack.Screen name="habitudes-cosmetiques" />
+        <Stack.Screen name="login" options={{ gestureEnabled: false }} />
+      </Stack>
+    </>
   );
 }
 
