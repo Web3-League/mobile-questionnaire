@@ -173,7 +173,7 @@ export default function LoginScreen() {
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>
-              © {new Date().getFullYear()} Votre Entreprise
+              {new Date().getFullYear()} Cosmetest
             </Text>
           </View>
         </View>

@@ -553,6 +553,7 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
                 setIsLoading(true);
 
                 // Récupérer les données du volontaire
+                if (id === undefined) throw new Error('ID du volontaire manquant');
                 const response = await api.volontaires.getById(id);
                 const volontaireData = response.data || {};
 
@@ -1002,9 +1003,9 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
 
             if (isEditMode) {
                 // Mode édition
-                await api.volontaires.update(id, volontaireData);
+                await api.volontaires.update(id!, volontaireData);
                 try {
-                    await api.volontaires.updateDetails(id, detailsData);
+                    await api.volontaires.updateDetails(id!, detailsData);
                 } catch (detailsError) {
                     console.warn('Erreur lors de la mise à jour des détails du volontaire:', detailsError);
                 }
