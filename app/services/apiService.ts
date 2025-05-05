@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Configuration de base d'axios
 const API: AxiosInstance = axios.create({
   baseURL: 'http://10.0.2.2:8888',
+  //baseURL: 'http://192.168.1.36:8888',
   timeout: 30000, // Increase timeout to 30 seconds for testing
   headers: {
     'Content-Type': 'application/json',

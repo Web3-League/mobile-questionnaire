@@ -11,7 +11,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import Icon from "react-native-vector-icons/Feather";
 
 // Importez votre composant VolontaireForm
-import VolontaireForm from "../components/VolontaireForm";
+import VolontaireForm from "../components/VolontaireForm/VolontaireForm";
 
 export default function VolontairePage() {
   const router = useRouter();

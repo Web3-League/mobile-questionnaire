@@ -1,4 +1,4 @@
-import { FormData, FormSection } from '../types';
+import { FormData, FormSection } from '../../types';
 import { FORM_SECTIONS } from './formConfig';
 
 /**

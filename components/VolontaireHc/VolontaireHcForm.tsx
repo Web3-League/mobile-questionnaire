@@ -2,19 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
-import api from '../app/services/apiService';
+import api from '../../app/services/apiService';
 import { styles } from './stylesHc';
 
 // Components
 import FormHeader from './FormHeader';
-import SwitchNavigation from './SwitchNavigation';
 import CollapsibleSection from './CollapsibleSection';
 import CheckboxGroup from './CheckboxGroup';
 import ActionButtons from './ActionButtons';
 
 // Configurations
 import { FORM_SECTIONS } from './formConfig';
-import { FormData, FormSection, RootStackParamList } from '../types';
+import { FormData, FormSection, RootStackParamList } from '../../types';
 import { initializeAllFieldsBoolean } from './initializeAllFieldsBoolean';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';

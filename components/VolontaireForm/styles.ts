@@ -1,12 +1,13 @@
+// styles.ts
 import { StyleSheet, Dimensions } from 'react-native';
 
-// Obtenir les dimensions de l'écran
-const { width, height } = Dimensions.get('window');
+// Get screen dimensions
+const { width } = Dimensions.get('window');
 
-// Vérifier si c'est une tablette (approche simple)
+// Check if device is a tablet
 const isTablet = width >= 768;
 
-// Définir des constantes pour les tailles et les marges adaptées aux tablettes
+// Define constants for sizes and margins based on device type
 const SPACING = isTablet ? 16 : 12;
 const FONT_SIZE_SMALL = isTablet ? 14 : 12;
 const FONT_SIZE_NORMAL = isTablet ? 16 : 14;
@@ -17,7 +18,7 @@ const INPUT_HEIGHT = 50;
 const BUTTON_HEIGHT = 52;
 const TAB_HEIGHT = 56;
 
-// Palette de couleurs
+// Color palette
 const COLORS = {
   primary: '#2563EB',
   primaryDark: '#1D4ED8',
@@ -44,7 +45,7 @@ export default StyleSheet.create({
     flex: 1,
   },
   
-  // En-tête
+  // Header
   header: {
     backgroundColor: COLORS.surface,
     paddingVertical: SPACING,
@@ -92,7 +93,7 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   
-  // Messages de notification
+  // Notification messages
   errorBanner: {
     backgroundColor: '#FEE2E2',
     padding: SPACING,
@@ -124,7 +125,7 @@ export default StyleSheet.create({
     flex: 1,
   },
   
-  // Container principal du formulaire
+  // Main form container
   formContainer: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -174,7 +175,7 @@ export default StyleSheet.create({
     marginRight: 4,
   },
   
-  // Section de formulaire
+  // Form section
   sectionTitle: {
     fontSize: FONT_SIZE_LARGE,
     fontWeight: '600',
@@ -190,7 +191,7 @@ export default StyleSheet.create({
     marginBottom: SPACING / 2,
   },
   
-  // Disposition en grille
+  // Grid layout
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -205,7 +206,7 @@ export default StyleSheet.create({
     width: '100%',
   },
   
-  // Champs de formulaire
+  // Form fields
   formField: {
     marginBottom: SPACING,
   },
@@ -244,12 +245,12 @@ export default StyleSheet.create({
   inputText: {
     color: COLORS.text.primary,
     fontSize: FONT_SIZE_NORMAL,
-    paddingVertical: (INPUT_HEIGHT - FONT_SIZE_NORMAL) / 2, // Centrer verticalement
+    paddingVertical: (INPUT_HEIGHT - FONT_SIZE_NORMAL) / 2, // Center vertically
   },
   placeholderText: {
     color: COLORS.text.placeholder,
     fontSize: FONT_SIZE_NORMAL,
-    paddingVertical: (INPUT_HEIGHT - FONT_SIZE_NORMAL) / 2, // Centrer verticalement
+    paddingVertical: (INPUT_HEIGHT - FONT_SIZE_NORMAL) / 2, // Center vertically
   },
   textarea: {
     borderWidth: 1,
@@ -273,8 +274,50 @@ export default StyleSheet.create({
     height: INPUT_HEIGHT,
     justifyContent: 'center',
   },
+  selectButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: '100%',
+    paddingHorizontal: 12,
+  },
   picker: {
     height: '100%',
+  },
+  
+  // Modal picker
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  pickerModalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingBottom: 20,
+  },
+  pickerModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  pickerModalTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  pickerModalCancel: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  pickerModalDone: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2563EB',
   },
   
   // Checkbox
@@ -309,7 +352,7 @@ export default StyleSheet.create({
     color: COLORS.text.primary,
   },
   
-  // Section pliable
+  // Collapsible section
   collapsibleSection: {
     marginBottom: SPACING * 2,
     borderWidth: 1,
@@ -335,7 +378,7 @@ export default StyleSheet.create({
     padding: SPACING,
   },
   
-  // Boutons d'action
+  // Action buttons
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -381,7 +424,7 @@ export default StyleSheet.create({
     marginRight: SPACING / 2,
   },
   
-  // Divers
+  // Miscellaneous
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

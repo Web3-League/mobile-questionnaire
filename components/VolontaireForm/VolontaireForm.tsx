@@ -1,346 +1,45 @@
-import React, { useState, useEffect, useRef, useMemo, ReactNode } from 'react';
+// VolontaireForm.tsx
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    TextInput,
-    ActivityIndicator,
-    Alert,
-    Platform,
-    KeyboardAvoidingView,
-    Modal,
-    TouchableWithoutFeedback,
-    Keyboard,
-    SafeAreaView,
-    Dimensions,
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  KeyboardAvoidingView,
+  Keyboard,
+  SafeAreaView,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import { Picker } from '@react-native-picker/picker';
-import WebDatePicker from './WebDatePicker';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/Feather';
-import api from '../app/services/apiService';
+import api from '../../app/services/apiService';
+import FormField, { FormFieldType, FormFieldOption } from './FormField';
+import CheckboxField from './CheckboxField';
+import CollapsibleSection from './CollapsibleSection';
+import FormTabs, { FormTab } from './FormTabs';
 import styles from './styles';
+import { toISODateString } from './FormField'; // Import the utility function
 
-// Détection de tablette plus précise
-const { width } = Dimensions.get('window');
-const isTablet = width >= 768;
-
-// Types généraux
-type FormFieldType = 'text' | 'select' | 'date' | 'textarea' | 'number';
-type FormTab = {
-    id: string;
-    label: string;
-    icon: string;
-};
-
-type FormFieldOption = string | { label: string; value: string };
-
-// Props des composants
-interface FormFieldProps {
-    label: string;
-    id: string;
-    type?: FormFieldType;
-    value?: string;
-    onChange: (name: string, value: string) => void;
-    required?: boolean;
-    error?: string | null;
-    options?: FormFieldOption[]; // Remove | null for better type safety
-    placeholder?: string;
-    infoTooltip?: string | null;
-    numberOfLines?: number;
-}
-
-interface CheckboxFieldProps {
-    label: string;
-    id: string;
-    checked: boolean;
-    onChange: (id: string, value: 'Oui' | 'Non') => void;
-}
-
-interface CollapsibleSectionProps {
-    title: string;
-    children: ReactNode;
-    isOpen?: boolean;
-    icon?: ReactNode;
-}
-
-interface FormTabsProps {
-    tabs: FormTab[];
-    activeTab: string;
-    setActiveTab: (tabId: string) => void;
-}
-
-// Types pour la navigation
+// Types for navigation
 type VolontaireFormRouteParams = {
-    id?: string;
+  id?: string;
 };
 
 type NavProps = {
-    VolontaireDetails: { id: string };
+  VolontaireDetails: { id: string };
 };
 
-// Interface pour les données du formulaire
+// Interface for form data
 interface FormData {
-    [key: string]: string;
-
+  [key: string]: string;
 }
 
-// Fonction utilitaire pour convertir une date au format ISO
-const toISODateString = (dateString?: string | Date): string => {
-    try {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toISOString().split('T')[0];
-    } catch (error) {
-        console.error('Erreur de conversion de date:', error);
-        return '';
-    }
-};
-
-// Composants
-const FormTabs: React.FC<FormTabsProps> = ({ tabs, activeTab, setActiveTab }) => (
-    <View style={styles.tabsWrapper}>
-        <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.tabsContainer}
-            contentContainerStyle={styles.tabsContentContainer}>
-            {tabs.map((tab) => (
-                <TouchableOpacity
-                    key={tab.id}
-                    style={[styles.tabButton, activeTab === tab.id && styles.activeTabButton]}
-                    onPress={() => setActiveTab(tab.id)}>
-                    <Icon
-                        name={tab.icon}
-                        size={16}
-                        color={activeTab === tab.id ? '#2563EB' : '#6B7280'}
-                        style={styles.tabIcon}
-                    />
-                    <Text style={[styles.tabButtonText, activeTab === tab.id && styles.activeTabButtonText]}>
-                        {tab.label}
-                    </Text>
-                </TouchableOpacity>
-            ))}
-        </ScrollView>
-    </View>
-);
-
-const FormField = ({
-    label,
-    id,
-    type = 'text',
-    value,
-    onChange,
-    required = false,
-    error = null,
-    options = [],
-    placeholder = '',
-    infoTooltip = null,
-    numberOfLines = 3,
-}: FormFieldProps) => {
-    const [showDatePicker, setShowDatePicker] = useState(false);
-    const [showPickerModal, setShowPickerModal] = useState(false);
-
-    // Amélioration pour les dates
-    const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-        setShowDatePicker(false);
-        if (selectedDate) {
-            const dateStr = toISODateString(selectedDate);
-            onChange(id, dateStr);
-        }
-    };
-
-    return (
-        <View style={styles.formField}>
-            <View style={styles.labelContainer}>
-                <Text style={styles.label}>
-                    {label} {required && <Text style={styles.required}>*</Text>}
-                </Text>
-                {infoTooltip && (
-                    <TouchableOpacity onPress={() => Alert.alert('Info', infoTooltip)}>
-                        <Icon name="info" size={16} color="#9CA3AF" />
-                    </TouchableOpacity>
-                )}
-                {error && <Text style={styles.errorText}>{error}</Text>}
-            </View>
-
-            {type === 'select' ? (
-                <View style={[styles.selectContainer, error ? styles.inputError : null]}>
-                    {/* Utiliser un TouchableOpacity au lieu du Picker direct pour les tablettes */}
-                    <TouchableOpacity
-                        style={tabletStyles.selectButton}
-                        onPress={() => {
-                            Keyboard.dismiss();
-                            setShowPickerModal(true);
-                        }}>
-                        <Text style={value ? styles.inputText : styles.placeholderText}>
-                            {value ?
-                                (() => {
-                                    const foundOption = options?.find(opt =>
-                                        (typeof opt === 'string' && opt === value) ||
-                                        (typeof opt === 'object' && opt.value === value)
-                                    );
-
-                                    if (foundOption) {
-                                        if (typeof foundOption === 'string') {
-                                            return foundOption;
-                                        } else if (typeof foundOption === 'object' && 'label' in foundOption) {
-                                            return foundOption.label;
-                                        }
-                                    }
-                                    return value;
-                                })() :
-                                'Sélectionner...'
-                            }
-                        </Text>
-                        <Icon name="chevron-down" size={16} color="#6B7280" />
-                    </TouchableOpacity>
-
-                    {/* Modal de sélection pour éviter les problèmes de Picker sur tablette */}
-                    <Modal
-                        transparent={true}
-                        visible={showPickerModal}
-                        onRequestClose={() => setShowPickerModal(false)}
-                        animationType="slide">
-                        <TouchableWithoutFeedback onPress={() => setShowPickerModal(false)}>
-                            <View style={tabletStyles.modalOverlay}>
-                                <TouchableWithoutFeedback>
-                                    <View style={tabletStyles.pickerModalContainer}>
-                                        <View style={tabletStyles.pickerModalHeader}>
-                                            <TouchableOpacity onPress={() => setShowPickerModal(false)}>
-                                                <Text style={tabletStyles.pickerModalCancel}>Annuler</Text>
-                                            </TouchableOpacity>
-                                            <Text style={tabletStyles.pickerModalTitle}>{label}</Text>
-                                            <TouchableOpacity onPress={() => setShowPickerModal(false)}>
-                                                <Text style={tabletStyles.pickerModalDone}>OK</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                        <View style={{ height: 200 }}>
-                                            <Picker
-                                                selectedValue={value || ''}
-                                                onValueChange={(itemValue) => {
-                                                    onChange(id, itemValue);
-                                                }}
-                                                style={{ flex: 1 }}>
-                                                <Picker.Item label="Sélectionner..." value="" />
-                                                {options?.map((option, index) =>
-                                                    typeof option === 'string' ? (
-                                                        <Picker.Item key={`${option}-${index}`} label={option} value={option} />
-                                                    ) : (
-                                                        option && typeof option === 'object' && 'label' in option && 'value' in option ? (
-                                                            <Picker.Item key={`${option.value}-${index}`} label={option.label} value={option.value} />
-                                                        ) : null
-                                                    )
-                                                )}
-                                            </Picker>
-                                        </View>
-                                    </View>
-                                </TouchableWithoutFeedback>
-                            </View>
-                        </TouchableWithoutFeedback>
-                    </Modal>
-                </View>
-            ) : type === 'date' ? (
-                Platform.OS === 'web' ? (
-                    <WebDatePicker
-                        label={label}
-                        id={id}
-                        value={value}
-                        onChange={onChange}
-                        placeholder={placeholder}
-                        error={error}
-                        required={required}
-                    />
-                ) : (
-                    <>
-                        <TouchableOpacity
-                            onPress={() => {
-                                Keyboard.dismiss();
-                                setShowDatePicker(true);
-                            }}
-                            style={[styles.input, error ? styles.inputError : null]}>
-                            <Text style={value ? styles.inputText : styles.placeholderText}>
-                                {value ? new Date(value).toLocaleDateString('fr-FR') : (placeholder || 'Sélectionner une date')}
-                            </Text>
-                        </TouchableOpacity>
-                        {showDatePicker && (
-                            <DateTimePicker
-                                value={value ? new Date(value) : new Date()}
-                                mode="date"
-                                display="default"
-                                onChange={handleDateChange}
-                            />
-                        )}
-                    </>
-                )
-            ) : type === 'textarea' ? (
-                <TextInput
-                    value={value || ''}
-                    onChangeText={(text) => onChange(id, text)}
-                    style={[styles.textarea, error ? styles.inputError : null]}
-                    placeholder={placeholder}
-                    multiline
-                    numberOfLines={numberOfLines}
-                    textAlignVertical="top"
-                />
-            ) : (
-                <TextInput
-                    value={value || ''}
-                    onChangeText={(text) => onChange(id, text)}
-                    style={[styles.input, error ? styles.inputError : null]}
-                    placeholder={placeholder}
-                    keyboardType={type === 'number' ? 'numeric' : 'default'}
-                />
-            )}
-        </View>
-    );
-};
-
-const CheckboxField: React.FC<CheckboxFieldProps> = ({ label, id, checked, onChange }) => (
-    <TouchableOpacity
-        style={styles.checkboxContainer}
-        onPress={() => onChange(id, checked ? 'Non' : 'Oui')}>
-        <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-            {checked && <Icon name="check" size={14} color="#FFFFFF" />}
-        </View>
-        <Text style={styles.checkboxLabel}>{label}</Text>
-    </TouchableOpacity>
-);
-
-const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
-    title,
-    children,
-    isOpen = false,
-    icon = null,
-}) => {
-    const [open, setOpen] = useState(isOpen);
-
-    return (
-        <View style={styles.collapsibleSection}>
-            <TouchableOpacity style={styles.sectionHeader} onPress={() => setOpen(!open)}>
-                <View style={styles.sectionTitleContainer}>
-                    {icon}
-                    <Text style={styles.sectionTitle}>{title}</Text>
-                </View>
-                <Icon
-                    name={open ? 'chevron-up' : 'chevron-down'}
-                    size={20}
-                    color="#1F2937"
-                />
-            </TouchableOpacity>
-
-            {open && <View style={styles.sectionContent}>{children}</View>}
-        </View>
-    );
-};
-
-// Props pour VolontaireForm
+// Props for VolontaireForm
 interface VolontaireFormProps {
-    isEmbedded?: boolean;
-    onSubmitSuccess?: (id: string) => void;
+  isEmbedded?: boolean;
+  onSubmitSuccess?: (id: string) => void;
 }
 
 // Composant principal
@@ -2536,52 +2235,5 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
         </SafeAreaView>
     );
 };
-
-// Styles supplémentaires pour la tablette
-const tabletStyles = StyleSheet.create({
-    // Select amélioré
-    selectButton: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        height: '100%',
-        paddingHorizontal: 12,
-    },
-
-    // Modal picker
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'flex-end',
-    },
-    pickerModalContainer: {
-        backgroundColor: '#FFFFFF',
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
-        paddingBottom: 20,
-    },
-    pickerModalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E5E7EB',
-    },
-    pickerModalTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#1F2937',
-    },
-    pickerModalCancel: {
-        fontSize: 14,
-        color: '#6B7280',
-    },
-    pickerModalDone: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#2563EB',
-    },
-});
 
 export default VolontaireForm;

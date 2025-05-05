@@ -14,7 +14,7 @@ import Icon from "react-native-vector-icons/Feather";
 import api from "./services/apiService";
 
 // Importez votre composant VolontaireHcForm
-import VolontaireHcForm from "../components/VolontaireHcForm";
+import VolontaireHcForm from "../components/VolontaireHc/VolontaireHcForm";
 
 export default function HabitudesCosmetiquesPage() {
   const router = useRouter();
