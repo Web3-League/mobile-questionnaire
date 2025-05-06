@@ -1,4 +1,4 @@
-import { FormSection } from '../types';
+import { FormSection } from '../../types';
 
 export const FORM_SECTIONS: FormSection[] = [
   {
