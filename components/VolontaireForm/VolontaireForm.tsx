@@ -1,16 +1,16 @@
 // VolontaireForm.tsx
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Platform,
-  KeyboardAvoidingView,
-  Keyboard,
-  SafeAreaView,
+    View,
+    Text,
+    ScrollView,
+    TouchableOpacity,
+    ActivityIndicator,
+    Alert,
+    Platform,
+    KeyboardAvoidingView,
+    Keyboard,
+    SafeAreaView,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
@@ -24,23 +24,25 @@ import { toISODateString } from './FormField'; // Import the utility function
 
 // Types for navigation
 type VolontaireFormRouteParams = {
-  id?: string;
+    id?: string;
 };
 
 type NavProps = {
-  VolontaireDetails: { id: string };
+    VolontaireDetails: { id: string };
 };
 
 // Interface for form data
 interface FormData {
-  [key: string]: string;
+    [key: string]: string;
 }
 
 // Props for VolontaireForm
 interface VolontaireFormProps {
-  isEmbedded?: boolean;
-  onSubmitSuccess?: (id: string) => void;
+    isEmbedded?: boolean;
+    onSubmitSuccess?: (id: string) => void;
 }
+
+
 
 // Composant principal
 const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
@@ -49,6 +51,96 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
     const { id } = route.params || {};
     const isEditMode = Boolean(id);
 
+    // Dans VolontaireForm.tsx
+    const handleBlur = (name: string) => {
+        // Valider uniquement ce champ spécifique
+        let error = '';
+
+        if (name === 'nom' && (!formData.nom || !formData.nom.trim())) {
+            error = 'Le nom est obligatoire';
+        } else if (name === 'prenom' && (!formData.prenom || !formData.prenom.trim())) {
+            error = 'Le prénom est obligatoire';
+        } else if (name === 'email') {
+            if (!formData.email || !formData.email.trim()) {
+                error = 'L\'email est obligatoire';
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+                error = 'Format d\'email invalide';
+            }
+        } else if (name === 'sexe' && !formData.sexe) {
+            error = 'Le sexe est obligatoire';
+        } else if (name === 'typePeau' && !formData.typePeau) {
+            error = 'Le type de peau est obligatoire';
+        } else if (name === 'codePostal' && formData.codePostal && !/^\d{5}$/.test(formData.codePostal)) {
+            error = 'Le code postal doit contenir 5 chiffres';
+        } else if (name === 'dateNaissance' && formData.dateNaissance) {
+            const date = new Date(formData.dateNaissance);
+            const today = new Date();
+            if (date > today) {
+                error = 'La date de naissance ne peut pas être dans le futur';
+            }
+        } else if (name === 'telephone' && formData.telephone) {
+            const phoneRegex = /^(0[1-9]|[1-9][0-9]{1,2})\d{8}$/;
+            if (!phoneRegex.test(formData.telephone)) {
+                error = 'Le numéro de téléphone est invalide';
+            }
+        }
+
+        if (error) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: error
+            }));
+        }
+    };
+
+    // Fonction pour faire défiler jusqu'à un champ spécifique
+    const scrollToField = (fieldId: string) => {
+        // Définir un mapping des champs vers les onglets qui les contiennent
+        const fieldToTab: Record<string, string> = {
+            'nom': 'infos-personnelles',
+            'prenom': 'infos-personnelles',
+            'email': 'infos-personnelles',
+            'sexe': 'infos-personnelles',
+            'typePeau': 'peau',
+            'codePostal': 'infos-personnelles',
+            // Ajoutez tous les autres champs ici
+        };
+
+        // Changer d'onglet si nécessaire
+        const targetTab = fieldToTab[fieldId];
+        if (targetTab && targetTab !== activeTab) {
+            setActiveTab(targetTab);
+
+            // Attendre que l'onglet change avant de défiler
+            setTimeout(() => {
+                // Utiliser les références pour faire défiler vers le champ
+                // Cette partie nécessite d'ajouter des références aux champs
+                if (scrollViewRef.current) {
+                    scrollViewRef.current.scrollTo({ y: 0, animated: true });
+                }
+            }, 100);
+        } else {
+            // Juste faire défiler vers le haut si on est déjà dans le bon onglet
+            if (scrollViewRef.current) {
+                scrollViewRef.current.scrollTo({ y: 0, animated: true });
+            }
+        }
+    };
+
+    const getFieldLabel = (fieldId: string): string => {
+        // Map des IDs de champs vers leurs libellés
+        const fieldLabels: Record<string, string> = {
+            'nom': 'Nom',
+            'prenom': 'Prénom',
+            'email': 'Email',
+            'sexe': 'Sexe',
+            'typePeau': 'Type de peau',
+            'codePostal': 'Code postal',
+            // Ajoutez tous les autres champs obligatoires ici
+        };
+
+        return fieldLabels[fieldId] || fieldId;
+    };
 
 
 
@@ -219,12 +311,14 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
     }, []);
 
     const [activeTab, setActiveTab] = useState('infos-personnelles');
-    const [formData, setFormData] = useState<FormData>({});
+    const [formData, setFormData] = useState<FormData>(initialFormState);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [validationCount, setValidationCount] = useState(0);
+
 
     // Définition des onglets
     const tabs = [
@@ -507,18 +601,56 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
             newErrors.codePostal = 'Le code postal doit contenir 5 chiffres';
         }
 
+        if (formData.dateNaissance) {
+            const date = new Date(formData.dateNaissance);
+            const today = new Date();
+            if (date > today) {
+                newErrors.dateNaissance = 'La date de naissance ne peut pas être dans le futur ou null';
+            }
+        }
+
+        if (!formData.dateNaissance) {
+            newErrors.dateNaissance = 'La date de naissance est obligatoire';
+        }
+
+        if (!formData.telephone) {
+            newErrors.telephone = 'Le numéro de téléphone est obligatoire';
+        }
+
+        if (formData.telephone) {
+            const phoneRegex = /^(0[1-9]|[1-9][0-9]{1,2})\d{8}$/;
+            if (!phoneRegex.test(formData.telephone)) {
+                newErrors.telephone = 'Le numéro de téléphone est invalide';
+            }
+        }
+
         setErrors(newErrors);
+        setValidationCount(prev => prev + 1); // Force le re-rendu
         return Object.keys(newErrors).length === 0;
     };
 
     // Soumission du formulaire
     const handleSubmit = async () => {
-        // Vérification de la validité du formulaire
-        if (!validateForm()) {
-            // Faire défiler vers le haut en cas d'erreur
-            if (scrollViewRef.current) {
-                scrollViewRef.current.scrollTo({ y: 0, animated: true });
-            }
+        // Appeler validateForm() une seule fois et utiliser le résultat
+        const isValid = validateForm();
+        
+        // Utiliser la variable stockée
+        if (!isValid) {            
+            // Attendre que l'état soit mis à jour
+            setTimeout(() => {
+                // Faire défiler vers la bannière d'erreur
+                if (scrollViewRef.current) {
+                    scrollViewRef.current.scrollTo({ y: 0, animated: true });
+                }
+                
+                // Si nous sommes dans un onglet qui ne contient pas d'erreurs, passer au premier onglet avec erreurs
+                const fieldsWithErrors = Object.keys(errors);
+                if (fieldsWithErrors.length > 0) {
+                    const firstFieldWithError = fieldsWithErrors[0];
+                    scrollToField(firstFieldWithError);
+                }
+            }, 10); // Un petit délai pour s'assurer que l'état est mis à jour
+            
             return;
         }
 
@@ -792,6 +924,7 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
                                     type="text"
                                     value={formData.nom}
                                     onChange={handleChange}
+                                    onBlur={() => handleBlur('nom')}
                                     required
                                     error={errors.nom}
                                 />
@@ -804,6 +937,7 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
                                     type="text"
                                     value={formData.prenom}
                                     onChange={handleChange}
+                                    onBlur={() => handleBlur('prenom')}
                                     required
                                     error={errors.prenom}
                                 />
@@ -816,6 +950,7 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
                                     type="text"
                                     value={formData.email}
                                     onChange={handleChange}
+                                    onBlur={() => handleBlur('email')}
                                     required
                                     error={errors.email}
                                 />
@@ -828,6 +963,9 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
                                     type="text"
                                     value={formData.telephone}
                                     onChange={handleChange}
+                                    onBlur={() => handleBlur('telephone')}
+                                    required
+                                    error={errors.telephone}
                                 />
                             </View>
 
@@ -849,6 +987,9 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
                                     value={formData.dateNaissance}
                                     onChange={handleChange}
                                     placeholder="Sélectionner une date"
+                                    onBlur={() => handleBlur('dateNaissance')}
+                                    required
+                                    error={errors.dateNaissance}
                                 />
                             </View>
 
@@ -859,6 +1000,7 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
                                     type="select"
                                     value={formData.sexe}
                                     onChange={handleChange}
+                                    onBlur={() => handleBlur('sexe')}
                                     required
                                     error={errors.sexe}
                                     options={[
@@ -1057,6 +1199,7 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
                                     type="select"
                                     value={formData.typePeau}
                                     onChange={handleChange}
+                                    onBlur={() => handleBlur('typePeau')}
                                     required
                                     error={errors.typePeau}
                                     options={[
@@ -2174,6 +2317,31 @@ const VolontaireForm: React.FC<VolontaireFormProps> = (props) => {
                         <Text style={styles.successBannerText}>{successMessage}</Text>
                     </View>
                 ) : null}
+
+                {Object.keys(errors).length > 0 && (
+                    <View style={styles.formErrorBanner}>
+                        <View style={styles.formErrorHeader}>
+                            <Icon name="alert-triangle" size={20} color="#B91C1C" />
+                            <Text style={styles.formErrorTitle}>
+                                Veuillez compléter les champs obligatoires suivants :
+                            </Text>
+                        </View>
+                        <View style={styles.formErrorList}>
+                            {Object.keys(errors).map((key) => (
+                                <TouchableOpacity
+                                    key={key}
+                                    style={styles.formErrorItem}
+                                    onPress={() => scrollToField(key)}
+                                >
+                                    <Icon name="chevron-right" size={16} color="#B91C1C" />
+                                    <Text style={styles.formErrorItemText}>
+                                        {getFieldLabel(key)} : {errors[key]}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+                )}
 
                 <View style={{ flex: 1 }}>
                     {/* Navigation par onglets */}

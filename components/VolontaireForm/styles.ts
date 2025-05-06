@@ -44,7 +44,7 @@ export default StyleSheet.create({
   keyboardAvoidingContainer: {
     flex: 1,
   },
-  
+
   // Header
   header: {
     backgroundColor: COLORS.surface,
@@ -92,7 +92,7 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  
+
   // Notification messages
   errorBanner: {
     backgroundColor: '#FEE2E2',
@@ -124,7 +124,7 @@ export default StyleSheet.create({
     marginLeft: SPACING,
     flex: 1,
   },
-  
+
   // Main form container
   formContainer: {
     flex: 1,
@@ -133,7 +133,7 @@ export default StyleSheet.create({
   formScrollContent: {
     padding: SPACING * 2,
   },
-  
+
   // Tabs
   tabsWrapper: {
     backgroundColor: COLORS.surface,
@@ -174,7 +174,7 @@ export default StyleSheet.create({
   tabIcon: {
     marginRight: 4,
   },
-  
+
   // Form section
   sectionTitle: {
     fontSize: FONT_SIZE_LARGE,
@@ -190,7 +190,7 @@ export default StyleSheet.create({
     marginTop: SPACING * 1.5,
     marginBottom: SPACING / 2,
   },
-  
+
   // Grid layout
   gridContainer: {
     flexDirection: 'row',
@@ -205,7 +205,7 @@ export default StyleSheet.create({
   fullWidth: {
     width: '100%',
   },
-  
+
   // Form fields
   formField: {
     marginBottom: SPACING,
@@ -264,7 +264,7 @@ export default StyleSheet.create({
     textAlignVertical: 'top',
     minHeight: INPUT_HEIGHT * 3,
   },
-  
+
   // Select/Picker
   selectContainer: {
     borderWidth: 1,
@@ -284,7 +284,7 @@ export default StyleSheet.create({
   picker: {
     height: '100%',
   },
-  
+
   // Modal picker
   modalOverlay: {
     flex: 1,
@@ -319,7 +319,7 @@ export default StyleSheet.create({
     fontWeight: '600',
     color: '#2563EB',
   },
-  
+
   // Checkbox
   checkboxGroup: {
     flexDirection: 'row',
@@ -351,7 +351,7 @@ export default StyleSheet.create({
     fontSize: FONT_SIZE_NORMAL,
     color: COLORS.text.primary,
   },
-  
+
   // Collapsible section
   collapsibleSection: {
     marginBottom: SPACING * 2,
@@ -377,7 +377,7 @@ export default StyleSheet.create({
   sectionContent: {
     padding: SPACING,
   },
-  
+
   // Action buttons
   actionButtons: {
     flexDirection: 'row',
@@ -423,7 +423,7 @@ export default StyleSheet.create({
   buttonIcon: {
     marginRight: SPACING / 2,
   },
-  
+
   // Miscellaneous
   loadingContainer: {
     flex: 1,
@@ -433,5 +433,54 @@ export default StyleSheet.create({
   },
   bottomSpacer: {
     height: 40,
+  },
+
+  //erreur message
+  labelRequired: {
+    color: '#000',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  labelRequiredAsterisk: {
+    color: '#DC2626',
+    fontWeight: '600',
+  },
+  formErrorBanner: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 4,
+    padding: 12,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  formErrorText: {
+    color: '#B91C1C',
+    marginLeft: 8,
+    flex: 1,
+    fontWeight: '500',
+  },
+  formErrorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  formErrorTitle: {
+    color: '#B91C1C',
+    marginLeft: 8,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  formErrorList: {
+    marginLeft: 28,
+  },
+  formErrorItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  formErrorItemText: {
+    color: '#B91C1C',
+    marginLeft: 4,
+    fontSize: 13,
   },
 });

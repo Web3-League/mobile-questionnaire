@@ -1,13 +1,13 @@
 // FormField.tsx
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  Alert, 
-  Platform, 
-  Keyboard 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  Platform,
+  Keyboard
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -16,6 +16,8 @@ import styles from './styles';
 import WebDatePicker from './WebDatePicker';
 import { Modal } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native';
+import FieldAlert from './FieldAlert';
+
 
 export type FormFieldType = 'text' | 'select' | 'date' | 'textarea' | 'number';
 export type FormFieldOption = string | { label: string; value: string };
@@ -26,6 +28,7 @@ export interface FormFieldProps {
   type?: FormFieldType;
   value?: string;
   onChange: (name: string, value: string) => void;
+  onBlur?: () => void;
   required?: boolean;
   error?: string | null;
   options?: FormFieldOption[];
@@ -52,6 +55,7 @@ const FormField: React.FC<FormFieldProps> = ({
   type = 'text',
   value,
   onChange,
+  onBlur,
   required = false,
   error = null,
   options = [],
@@ -74,15 +78,16 @@ const FormField: React.FC<FormFieldProps> = ({
   return (
     <View style={styles.formField}>
       <View style={styles.labelContainer}>
-        <Text style={styles.label}>
-          {label} {required && <Text style={styles.required}>*</Text>}
+        <Text style={required ? styles.labelRequired : styles.label}>
+          {label}
+          {required && <Text style={styles.labelRequiredAsterisk}> *</Text>}
         </Text>
         {infoTooltip && (
           <TouchableOpacity onPress={() => Alert.alert('Info', infoTooltip)}>
             <Icon name="info" size={16} color="#9CA3AF" />
           </TouchableOpacity>
         )}
-        {error && <Text style={styles.errorText}>{error}</Text>}
+        {error && <FieldAlert message={error} />}
       </View>
 
       {type === 'select' ? (
@@ -96,21 +101,21 @@ const FormField: React.FC<FormFieldProps> = ({
             <Text style={value ? styles.inputText : styles.placeholderText}>
               {value
                 ? (() => {
-                    const foundOption = options?.find(
-                      (opt) =>
-                        (typeof opt === 'string' && opt === value) ||
-                        (typeof opt === 'object' && opt.value === value)
-                    );
+                  const foundOption = options?.find(
+                    (opt) =>
+                      (typeof opt === 'string' && opt === value) ||
+                      (typeof opt === 'object' && opt.value === value)
+                  );
 
-                    if (foundOption) {
-                      if (typeof foundOption === 'string') {
-                        return foundOption;
-                      } else if (typeof foundOption === 'object' && 'label' in foundOption) {
-                        return foundOption.label;
-                      }
+                  if (foundOption) {
+                    if (typeof foundOption === 'string') {
+                      return foundOption;
+                    } else if (typeof foundOption === 'object' && 'label' in foundOption) {
+                      return foundOption.label;
                     }
-                    return value;
-                  })()
+                  }
+                  return value;
+                })()
                 : 'Sélectionner...'}
             </Text>
             <Icon name="chevron-down" size={16} color="#6B7280" />
@@ -206,6 +211,7 @@ const FormField: React.FC<FormFieldProps> = ({
         <TextInput
           value={value || ''}
           onChangeText={(text) => onChange(id, text)}
+          onBlur={onBlur} 
           style={[styles.input, error ? styles.inputError : null]}
           placeholder={placeholder}
           keyboardType={type === 'number' ? 'numeric' : 'default'}
