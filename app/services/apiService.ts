@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// Remove js-cookie import as it's not compatible with React Native
+import { router } from 'expo-router';
+
 
 // Configuration de base d'axios
 const API: AxiosInstance = axios.create({
@@ -19,7 +20,7 @@ const setAuthToken = async (token: string) => {
   if (token) {
     // Store token in AsyncStorage
     await AsyncStorage.setItem('authToken', token);
-    
+
     // Also set in default headers for immediate requests
     API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     console.log("Token défini dans AsyncStorage et en-têtes");
@@ -56,7 +57,7 @@ API.interceptors.request.use(
         console.log("Token ajouté à la requête depuis AsyncStorage");
       }
     }
-    
+
     console.log(`Requête vers ${config.url}`);
     return config;
   },
@@ -66,17 +67,39 @@ API.interceptors.request.use(
   }
 );
 
+let isRedirectingToLogin = false;
+
 // Add response interceptor for error handling
 API.interceptors.response.use(
   response => response,
-  error => {
+  async error => {
     console.log('API Error:', error.message);
+
+    // Vérifier si l'erreur est due à un token invalide (401 Unauthorized)
+    if (error.response && error.response.status === 401 && !isRedirectingToLogin) {
+      console.log('Token invalide - Redirection vers la page de connexion');
+      isRedirectingToLogin = true;
+
+      // Supprimer le token
+      await AsyncStorage.removeItem('authToken');
+      delete API.defaults.headers.common['Authorization'];
+
+      // Rediriger vers la page de connexion en utilisant expo-router
+      router.replace('/login');
+
+      // Réinitialiser le drapeau de redirection après un court délai
+      setTimeout(() => {
+        isRedirectingToLogin = false;
+      }, 2000);
+    }
+
     if (error.response) {
       console.log('Status:', error.response.status);
       console.log('Data:', error.response.data);
     } else if (error.request) {
       console.log('No response received:', error.request);
     }
+
     return Promise.reject(error);
   }
 );
@@ -176,8 +199,8 @@ const habituesCosmetiquesApi = {
 const testConnection = async () => {
   try {
     console.log('Testing API connection...');
-    const response = await axios.get('http://10.0.2.2:8888/api/health', { 
-      timeout: 5000 
+    const response = await axios.get('http://10.0.2.2:8888/api/health', {
+      timeout: 5000
     });
     console.log('Connection successful:', response.data);
     return true;
@@ -210,11 +233,11 @@ export default {
   login: async (login: string, password: string) => {
     try {
       console.log(`Tentative de connexion avec: ${login}`);
-      const response = await API.post('/api/auth/login', { 
+      const response = await API.post('/api/auth/login', {
         login: login,
         motDePasse: password
       });
-      
+
       // Si la réponse contient un token, le stocker
       if (response.data && response.data.token) {
         await setAuthToken(response.data.token);
