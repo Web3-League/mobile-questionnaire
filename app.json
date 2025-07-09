@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.boris.peyriguere.Questionnaire"
+      "package": "com.boris.peyriguere.Questionnaire",
+      "usesCleartextTraffic": true
     },
     "web": {
       "bundler": "metro",
@@ -38,7 +39,9 @@
         "expo-build-properties",
         {
           "android": {
-            "enablePngCrunchInReleaseBuilds": false
+            "enablePngCrunchInReleaseBuilds": false,
+            "usesCleartextTraffic": true,
+            "networkSecurityConfig": "network_security_config"
           }
         }
       ]
@@ -50,6 +53,7 @@
       "router": {
         "origin": false
       },
+      "apiUrl": "http://192.168.1.16:8888",
       "eas": {
         "projectId": "0be346aa-eee0-4bc1-89fd-7f9da656bfbc"
       }
