@@ -5,14 +5,14 @@ import { router } from 'expo-router';
 
 // Configuration de base d'axios
 const API: AxiosInstance = axios.create({
-  baseURL: 'http://10.0.2.2:8888',
-  //baseURL: 'http://192.168.1.36:8888',
+  //baseURL: 'http://10.0.2.2:8888',
+  baseURL: 'http://192.168.1.16:8888',
   timeout: 30000, // Increase timeout to 30 seconds for testing
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   },
-  withCredentials: true
+  //withCredentials: true
 });
 
 // Fonction pour définir le token - modified to only use AsyncStorage
@@ -199,7 +199,7 @@ const habituesCosmetiquesApi = {
 const testConnection = async () => {
   try {
     console.log('Testing API connection...');
-    const response = await axios.get('http://10.0.2.2:8888/api/health', {
+    const response = await axios.get('http://192.168.1.16:8888/api/health', {
       timeout: 5000
     });
     console.log('Connection successful:', response.data);
